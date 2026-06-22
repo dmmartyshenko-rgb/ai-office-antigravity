@@ -5,6 +5,7 @@ Deployed as a Vercel serverless function (webhook mode).
 """
 import json
 import os
+import sys
 import urllib.request
 from http.server import BaseHTTPRequestHandler
 
@@ -59,7 +60,6 @@ def _send_telegram(chat_id: int, text: str) -> None:
 
 
 def _send_long(chat_id: int, text: str) -> None:
-    """Split and send messages longer than Telegram's 4096-char limit."""
     MAX = 4000
     for i in range(0, len(text), MAX):
         _send_telegram(chat_id, text[i : i + MAX])
@@ -77,34 +77,35 @@ def _handle_update(update: dict) -> None:
 
     cmd = text.lower().split()[0] if text.startswith("/") else ""
 
-    if cmd == "/start":
-        _send_telegram(
-            chat_id,
-            "Привет! Я AI-кодер на базе Xiaomi MiMo V2-Flash.\n\n"
-            "Отправь любой вопрос по коду — отвечу с примерами.\n\n"
-            "Примеры:\n"
-            "• Напиши сортировку пузырьком на Python\n"
-            "• Почему мой SQL запрос работает медленно?\n"
-            "• Объясни разницу между async/await и threading\n\n"
-            "/help — все команды",
-        )
-        return
-
-    if cmd == "/help":
-        _send_telegram(
-            chat_id,
-            "Команды:\n"
-            "/start — приветствие\n"
-            "/help — это сообщение\n\n"
-            "Просто пиши вопрос или код — отвечу с примерами.",
-        )
-        return
-
     try:
-        reply = _call_mimo(text)
-        _send_long(chat_id, reply)
+        if cmd == "/start":
+            _send_telegram(
+                chat_id,
+                "Привет! Я AI-кодер на базе Xiaomi MiMo V2-Flash.\n\n"
+                "Отправь любой вопрос по коду — отвечу с примерами.\n\n"
+                "Примеры:\n"
+                "• Напиши сортировку пузырьком на Python\n"
+                "• Почему мой SQL запрос работает медленно?\n"
+                "• Объясни разницу между async/await и threading\n\n"
+                "/help — все команды",
+            )
+        elif cmd == "/help":
+            _send_telegram(
+                chat_id,
+                "Команды:\n"
+                "/start — приветствие\n"
+                "/help — это сообщение\n\n"
+                "Просто пиши вопрос или код — отвечу с примерами.",
+            )
+        else:
+            reply = _call_mimo(text)
+            _send_long(chat_id, reply)
     except Exception as exc:
-        _send_telegram(chat_id, f"Ошибка: {exc}")
+        print(f"[webhook] error in _handle_update: {exc}", file=sys.stderr)
+        try:
+            _send_telegram(chat_id, f"Ошибка: {exc}")
+        except Exception:
+            pass
 
 
 class handler(BaseHTTPRequestHandler):
@@ -112,7 +113,13 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
-        self.wfile.write(json.dumps({"status": "ok", "bot": "MiMo Code Bot"}).encode())
+        status = {
+            "status": "ok",
+            "bot": "MiMo Code Bot",
+            "has_telegram_token": bool(os.environ.get("TELEGRAM_BOT_TOKEN")),
+            "has_openrouter_key": bool(os.environ.get("OPENROUTER_API_KEY")),
+        }
+        self.wfile.write(json.dumps(status).encode())
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
@@ -120,8 +127,8 @@ class handler(BaseHTTPRequestHandler):
         try:
             update = json.loads(body)
             _handle_update(update)
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"[webhook] error in do_POST: {exc}", file=sys.stderr)
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"ok")
