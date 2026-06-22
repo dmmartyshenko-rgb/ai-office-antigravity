@@ -1,85 +1,108 @@
-# Xiaomi MiMo Code — Инструкция по установке
+# ai-office-antigravity
 
-MiMo Code — это AI-агент для написания кода от Xiaomi, совместимый с интерфейсом Anthropic Claude Code.
-
----
-
-## Требования
-
-- Node.js 18 или новее
-- macOS, Linux, или Windows (через WSL / Git Bash)
+Два инструмента в одном репозитории:
+1. **Xiaomi MiMo Code CLI** — инструкция установки + скрипт
+2. **MiMo Code Telegram Bot** — AI-кодер в Telegram, задеплоенный на Vercel
 
 ---
 
-## Установка
+## Часть 1 — Установка MiMo Code CLI
 
-### Способ 1 — одна команда (macOS / Linux)
+### Требования
+- Node.js 18+
+- macOS, Linux или Windows (через WSL/Git Bash)
 
+### Установка
+
+**macOS / Linux (одна команда):**
 ```bash
 curl -fsSL https://mimo.xiaomi.com/install | bash
 ```
 
-### Способ 2 — через npm (все платформы)
-
+**Все платформы (npm):**
 ```bash
 npm install -g @xiaomi-mimo/cli
 ```
 
----
+**Скрипт автоустановки (этот репо):**
+```bash
+bash install_mimo_code.sh
+```
 
-## Запуск
-
+### Запуск
 ```bash
 mimo
 ```
 
-При первом запуске мастер настройки предложит выбрать канал подключения.
-
----
-
-## Начальная конфигурация
-
-При первом запуске выберите один из вариантов подключения:
+При первом запуске выбери канал подключения:
 
 | Вариант | Описание |
 |---|---|
-| **MiMo Auto** | Бесплатно, нулевая конфигурация, анонимный канал |
-| **Xiaomi MiMo Platform** | Вход через OAuth-аккаунт Xiaomi |
-| **Миграция из Claude Code** | Перенос существующей аутентификации Claude |
-| **Пользовательский провайдер** | Любой OpenAI-совместимый API |
+| MiMo Auto | Бесплатно, нулевая конфигурация, анонимно |
+| Xiaomi MiMo Platform | Вход через OAuth-аккаунт Xiaomi |
+| Миграция из Claude Code | Перенос существующей аутентификации |
+| Пользовательский провайдер | Любой OpenAI-совместимый API |
 
----
+### Расположение конфига
+- Проект: `.mimocode/mimocode.json`
+- Глобально: `~/.config/mimocode/mimocode.json`
 
-## Конфигурационный файл
+### Решение проблем
 
-Настройки хранятся в:
-- **Проект:** `.mimocode/mimocode.json`
-- **Глобально:** `~/.config/mimocode/mimocode.json`
-
----
-
-## Решение проблем
-
-### WSL — артефакты при копировании текста
-
+**WSL — артефакты при копировании:**
 ```bash
 sudo apt install xsel
 ```
 
-### Голосовой ввод (опционально)
-
+**Голосовой ввод (опционально):**
 ```bash
 # macOS
 brew install sox
-
-# Ubuntu / Debian
+# Ubuntu/Debian
 sudo apt install sox
 ```
 
 ---
 
-## Ссылки
+## Часть 2 — MiMo Code Telegram Bot
 
-- [GitHub репозиторий MiMo-Code](https://github.com/XiaomiMiMo/MiMo-Code)
-- [Документация Xiaomi MiMo Platform](https://mimo.mi.com/docs/en-US/tokenplan/integration/mimo-code)
-- [Claude Code + MiMo интеграция](https://mimo.mi.com/docs/en-US/tokenplan/integration/claudecode)
+AI-помощник по коду в Telegram на базе MiMo V2.5 Pro.
+
+### Что умеет
+- Отвечает на вопросы по коду (Python, JS, SQL и др.)
+- Дебажит куски кода
+- Объясняет концепции
+- Отвечает на русском или английском в зависимости от твоего языка
+
+### Деплой на Vercel
+
+**1. Форкни репо и запушь на GitHub**
+
+**2. Получи креденшелы**
+- Telegram токен: [@BotFather](https://t.me/BotFather) → /newbot
+- MiMo API ключ: [platform.xiaomimimo.com](https://platform.xiaomimimo.com)
+
+**3. Создай проект в Vercel**
+- New Project → Import this repo
+- Добавь переменные окружения:
+  - `TELEGRAM_BOT_TOKEN` — токен от BotFather
+  - `MIMO_API_KEY` — ключ с платформы MiMo (начинается на `sk-`)
+
+**4. Задеплой**
+
+**5. Установи webhook в Telegram**
+```
+https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook?url=https://<твой-vercel-домен>/api/webhook
+```
+
+### Команды бота
+- `/start` — приветствие
+- `/help` — список команд
+- Любой текст → ответ AI-кодера
+
+---
+
+## Ссылки
+- [MiMo Code GitHub](https://github.com/XiaomiMiMo/MiMo-Code)
+- [MiMo API Platform](https://platform.xiaomimimo.com)
+- [MiMo API Docs](https://mimo.mi.com/docs/en-US/tokenplan/quick-access)
