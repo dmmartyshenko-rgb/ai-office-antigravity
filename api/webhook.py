@@ -1,20 +1,28 @@
 """
-MiMo Code Telegram Bot — AI coding assistant powered by Xiaomi MiMo V2-Flash (free).
-Uses OpenRouter free tier: xiaomi/mimo-v2-flash:free
+MiMo Code Telegram Bot — AI coding assistant.
+Primary: Xiaomi MiMo V2-Flash (free). Falls back through Qwen3 / Qwen2.5 if unavailable.
 Deployed as a Vercel serverless function (webhook mode).
 """
 import json
 import os
 import sys
+import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler
 
 TELEGRAM_API_URL = "https://api.telegram.org"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-MIMO_MODEL = "xiaomi/mimo-v2-flash:free"
+
+# Tried in order; next is used on 404/503 (provider offline)
+MODELS = [
+    "xiaomi/mimo-v2-flash:free",
+    "qwen/qwen3-235b-a22b:free",
+    "qwen/qwen-2.5-72b-instruct:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+]
 
 SYSTEM_PROMPT = (
-    "You are an expert coding assistant powered by Xiaomi MiMo V2-Flash. "
+    "You are an expert coding assistant. "
     "Help users with programming questions, debug code, explain concepts, "
     "review code, and write clean implementations. "
     "Always use proper code blocks with language tags. "
@@ -24,28 +32,38 @@ SYSTEM_PROMPT = (
 )
 
 
-def _call_mimo(user_text: str) -> str:
+def _call_ai(user_text: str) -> str:
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
-    payload = {
-        "model": MIMO_MODEL,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_text},
-        ],
-    }
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        OPENROUTER_URL,
-        data=data,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        body = json.loads(resp.read().decode("utf-8"))
-    return body["choices"][0]["message"]["content"]
+    last_exc: Exception = RuntimeError("No models available")
+    for model in MODELS:
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_text},
+            ],
+        }
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            OPENROUTER_URL,
+            data=data,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+            return body["choices"][0]["message"]["content"]
+        except urllib.error.HTTPError as exc:
+            last_exc = exc
+            print(f"[webhook] {model} → HTTP {exc.code}, trying next", file=sys.stderr)
+            if exc.code in (404, 503):
+                continue
+            raise
+    raise last_exc
 
 
 def _send_telegram(chat_id: int, text: str) -> None:
@@ -81,7 +99,7 @@ def _handle_update(update: dict) -> None:
         if cmd == "/start":
             _send_telegram(
                 chat_id,
-                "Привет! Я AI-кодер на базе Xiaomi MiMo V2-Flash.\n\n"
+                "Привет! Я AI-кодер.\n\n"
                 "Отправь любой вопрос по коду — отвечу с примерами.\n\n"
                 "Примеры:\n"
                 "• Напиши сортировку пузырьком на Python\n"
@@ -98,10 +116,10 @@ def _handle_update(update: dict) -> None:
                 "Просто пиши вопрос или код — отвечу с примерами.",
             )
         else:
-            reply = _call_mimo(text)
+            reply = _call_ai(text)
             _send_long(chat_id, reply)
     except Exception as exc:
-        print(f"[webhook] error in _handle_update: {exc}", file=sys.stderr)
+        print(f"[webhook] error: {exc}", file=sys.stderr)
         try:
             _send_telegram(chat_id, f"Ошибка: {exc}")
         except Exception:
@@ -128,7 +146,7 @@ class handler(BaseHTTPRequestHandler):
             update = json.loads(body)
             _handle_update(update)
         except Exception as exc:
-            print(f"[webhook] error in do_POST: {exc}", file=sys.stderr)
+            print(f"[webhook] do_POST error: {exc}", file=sys.stderr)
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"ok")
