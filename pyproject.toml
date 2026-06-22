@@ -1,2 +1,6 @@
+[project]
+name = "ai-office-antigravity"
+version = "0.1.0"
+
 [tool.vercel]
 entrypoint = "api.webhook:handler"
