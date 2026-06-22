@@ -14,6 +14,48 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest --silent
 
+      - name: Sync env vars to Vercel project
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, json, urllib.request
+
+          token = os.environ["VERCEL_TOKEN"]
+          project_id = "prj_mkBPsJWBPag9CUOiGkfkoAo8i1AR"
+          auth = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+          want = {
+              "OPENROUTER_API_KEY": os.environ["OPENROUTER_API_KEY"],
+              "TELEGRAM_BOT_TOKEN": os.environ["TELEGRAM_BOT_TOKEN"],
+          }
+
+          req = urllib.request.Request(
+              f"https://api.vercel.com/v10/projects/{project_id}/env",
+              headers={"Authorization": f"Bearer {token}"}
+          )
+          with urllib.request.urlopen(req) as r:
+              existing = {e["key"]: e["id"] for e in json.loads(r.read())["envs"]
+                          if "production" in e.get("target", [])}
+
+          for key, value in want.items():
+              if key in existing:
+                  url = f"https://api.vercel.com/v10/projects/{project_id}/env/{existing[key]}"
+                  data = json.dumps({"value": value}).encode()
+                  method = "PATCH"
+              else:
+                  url = f"https://api.vercel.com/v10/projects/{project_id}/env"
+                  data = json.dumps({"key": key, "value": value, "type": "encrypted",
+                                     "target": ["production"]}).encode()
+                  method = "POST"
+              req = urllib.request.Request(url, data=data, headers=auth, method=method)
+              with urllib.request.urlopen(req) as r:
+                  r.read()
+              print(f"{'Updated' if method == 'PATCH' else 'Created'} {key}")
+          PYEOF
+
       - name: Deploy to Vercel
         id: deploy
         env:
