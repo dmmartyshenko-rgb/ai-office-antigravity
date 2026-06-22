@@ -14,46 +14,23 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest --silent
 
-      - name: Deploy (first pass — creates project)
-        id: deploy1
+      - name: Deploy to Vercel
+        id: deploy
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          vercel --token "$VERCEL_TOKEN" --yes --prod 2>&1 | tee /tmp/deploy1.log
-          PROJECT_ID=$(python3 -c "import json; print(json.load(open('.vercel/project.json'))['projectId'])")
-          echo "project_id=$PROJECT_ID" >> $GITHUB_OUTPUT
-
-      - name: Set environment variables
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          PROJECT_ID: ${{ steps.deploy1.outputs.project_id }}
-        run: |
-          set_env() {
-            curl -sf -X POST "https://api.vercel.com/v10/projects/$PROJECT_ID/env" \
-              -H "Authorization: Bearer $VERCEL_TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "{\"key\":\"$1\",\"value\":\"$2\",\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}" \
-              && echo "Set $1" || echo "$1 may already exist"
-          }
-          set_env "TELEGRAM_BOT_TOKEN" "${{ secrets.TELEGRAM_BOT_TOKEN }}"
-          set_env "OPENROUTER_API_KEY" "${{ secrets.OPENROUTER_API_KEY }}"
-
-      - name: Redeploy with env vars
-        id: deploy2
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          OUTPUT=$(vercel --token "$VERCEL_TOKEN" --yes --prod 2>&1)
+          OUTPUT=$(vercel --token "$VERCEL_TOKEN" --yes --prod 2>&1) || true
           echo "$OUTPUT"
           URL=$(echo "$OUTPUT" | grep -oE 'https://[a-z0-9._-]+\.vercel\.app' | tail -1)
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "Deploy URL: $URL"
+          [ -n "$URL" ] || exit 1
 
       - name: Set Telegram webhook
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          DEPLOY_URL: ${{ steps.deploy2.outputs.url }}
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
         run: |
-          RESP=$(curl -s "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setWebhook?url=${DEPLOY_URL}/api/webhook")
-          echo "Webhook: $RESP"
-          echo "Bot live at: ${DEPLOY_URL}/api/webhook"
+          RESP=$(curl -s "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setWebhook?url=${DEPLOY_URL}")
+          echo "$RESP"
+          echo "Bot live at: ${DEPLOY_URL}"
