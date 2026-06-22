@@ -1,12 +1,13 @@
 # ai-office-antigravity
 
-Два инструмента в одном репозитории:
+Два инструмента в одном репо. Оба бесплатные.
+
 1. **Xiaomi MiMo Code CLI** — инструкция установки + скрипт
 2. **MiMo Code Telegram Bot** — AI-кодер в Telegram, задеплоенный на Vercel
 
 ---
 
-## Часть 1 — Установка MiMo Code CLI
+## Часть 1 — MiMo Code CLI (бесплатно)
 
 ### Требования
 - Node.js 18+
@@ -14,7 +15,7 @@
 
 ### Установка
 
-**macOS / Linux (одна команда):**
+**macOS / Linux:**
 ```bash
 curl -fsSL https://mimo.xiaomi.com/install | bash
 ```
@@ -24,7 +25,7 @@ curl -fsSL https://mimo.xiaomi.com/install | bash
 npm install -g @xiaomi-mimo/cli
 ```
 
-**Скрипт автоустановки (этот репо):**
+**Скрипт (этот репо):**
 ```bash
 bash install_mimo_code.sh
 ```
@@ -34,18 +35,7 @@ bash install_mimo_code.sh
 mimo
 ```
 
-При первом запуске выбери канал подключения:
-
-| Вариант | Описание |
-|---|---|
-| MiMo Auto | Бесплатно, нулевая конфигурация, анонимно |
-| Xiaomi MiMo Platform | Вход через OAuth-аккаунт Xiaomi |
-| Миграция из Claude Code | Перенос существующей аутентификации |
-| Пользовательский провайдер | Любой OpenAI-совместимый API |
-
-### Расположение конфига
-- Проект: `.mimocode/mimocode.json`
-- Глобально: `~/.config/mimocode/mimocode.json`
+> При первом запуске выбери **MiMo Auto** — бесплатно, без регистрации, без ключа.
 
 ### Решение проблем
 
@@ -54,55 +44,48 @@ mimo
 sudo apt install xsel
 ```
 
-**Голосовой ввод (опционально):**
+**Голосовой ввод:**
 ```bash
-# macOS
-brew install sox
-# Ubuntu/Debian
-sudo apt install sox
+brew install sox        # macOS
+sudo apt install sox    # Ubuntu/Debian
 ```
 
 ---
 
-## Часть 2 — MiMo Code Telegram Bot
+## Часть 2 — MiMo Code Telegram Bot (бесплатно)
 
-AI-помощник по коду в Telegram на базе MiMo V2.5 Pro.
+AI-помощник по коду в Telegram. Использует **xiaomi/mimo-v2-flash:free** через OpenRouter — бесплатно, зарегистрироваться можно без карты.
 
-### Что умеет
-- Отвечает на вопросы по коду (Python, JS, SQL и др.)
-- Дебажит куски кода
-- Объясняет концепции
-- Отвечает на русском или английском в зависимости от твоего языка
+### Деплой на Vercel — 3 шага
 
-### Деплой на Vercel
+**Шаг 1. Получи ключи**
 
-**1. Форкни репо и запушь на GitHub**
+| Что | Где взять | Цена |
+|---|---|---|
+| Telegram токен | [@BotFather](https://t.me/BotFather) → /newbot | Бесплатно |
+| OpenRouter API ключ | [openrouter.ai/keys](https://openrouter.ai/keys) | Бесплатно |
 
-**2. Получи креденшелы**
-- Telegram токен: [@BotFather](https://t.me/BotFather) → /newbot
-- MiMo API ключ: [platform.xiaomimimo.com](https://platform.xiaomimimo.com)
-
-**3. Создай проект в Vercel**
-- New Project → Import this repo
+**Шаг 2. Задеплой на Vercel**
+- [vercel.com](https://vercel.com) → New Project → Import этот репо
 - Добавь переменные окружения:
-  - `TELEGRAM_BOT_TOKEN` — токен от BotFather
-  - `MIMO_API_KEY` — ключ с платформы MiMo (начинается на `sk-`)
+  - `TELEGRAM_BOT_TOKEN`
+  - `OPENROUTER_API_KEY`
 
-**4. Задеплой**
+**Шаг 3. Установи webhook**
 
-**5. Установи webhook в Telegram**
+Открой в браузере:
 ```
-https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook?url=https://<твой-vercel-домен>/api/webhook
+https://api.telegram.org/bot<ТОКЕН>/setWebhook?url=https://<твой-домен>.vercel.app/api/webhook
 ```
 
 ### Команды бота
 - `/start` — приветствие
-- `/help` — список команд
+- `/help` — справка
 - Любой текст → ответ AI-кодера
 
 ---
 
 ## Ссылки
 - [MiMo Code GitHub](https://github.com/XiaomiMiMo/MiMo-Code)
+- [OpenRouter — mimo-v2-flash:free](https://openrouter.ai/xiaomi/mimo-v2-flash:free)
 - [MiMo API Platform](https://platform.xiaomimimo.com)
-- [MiMo API Docs](https://mimo.mi.com/docs/en-US/tokenplan/quick-access)

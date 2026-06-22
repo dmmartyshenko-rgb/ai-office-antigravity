@@ -1,5 +1,6 @@
 """
-MiMo Code Telegram Bot — AI coding assistant powered by Xiaomi MiMo V2.5 Pro.
+MiMo Code Telegram Bot — AI coding assistant powered by Xiaomi MiMo V2-Flash (free).
+Uses OpenRouter free tier: xiaomi/mimo-v2-flash:free
 Deployed as a Vercel serverless function (webhook mode).
 """
 import json
@@ -8,11 +9,11 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler
 
 TELEGRAM_API_URL = "https://api.telegram.org"
-MIMO_API_URL = "https://api.xiaomimimo.com/anthropic/v1/messages"
-MIMO_MODEL = os.environ.get("MIMO_MODEL", "mimo-v2.5-pro")
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+MIMO_MODEL = "xiaomi/mimo-v2-flash:free"
 
 SYSTEM_PROMPT = (
-    "You are an expert coding assistant powered by Xiaomi MiMo V2.5 Pro. "
+    "You are an expert coding assistant powered by Xiaomi MiMo V2-Flash. "
     "Help users with programming questions, debug code, explain concepts, "
     "review code, and write clean implementations. "
     "Always use proper code blocks with language tags. "
@@ -23,27 +24,27 @@ SYSTEM_PROMPT = (
 
 
 def _call_mimo(user_text: str) -> str:
-    api_key = os.environ.get("MIMO_API_KEY", "")
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
     payload = {
         "model": MIMO_MODEL,
-        "max_tokens": 4096,
-        "system": SYSTEM_PROMPT,
-        "messages": [{"role": "user", "content": user_text}],
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_text},
+        ],
     }
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
-        MIMO_API_URL,
+        OPENROUTER_URL,
         data=data,
         headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
         },
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=60) as resp:
         body = json.loads(resp.read().decode("utf-8"))
-    return body["content"][0]["text"]
+    return body["choices"][0]["message"]["content"]
 
 
 def _send_telegram(chat_id: int, text: str) -> None:
@@ -79,7 +80,7 @@ def _handle_update(update: dict) -> None:
     if cmd == "/start":
         _send_telegram(
             chat_id,
-            "Привет! Я AI-кодер на базе Xiaomi MiMo V2.5 Pro.\n\n"
+            "Привет! Я AI-кодер на базе Xiaomi MiMo V2-Flash.\n\n"
             "Отправь любой вопрос по коду — отвечу с примерами.\n\n"
             "Примеры:\n"
             "• Напиши сортировку пузырьком на Python\n"
@@ -103,7 +104,7 @@ def _handle_update(update: dict) -> None:
         reply = _call_mimo(text)
         _send_long(chat_id, reply)
     except Exception as exc:
-        _send_telegram(chat_id, f"Ошибка запроса к MiMo: {exc}")
+        _send_telegram(chat_id, f"Ошибка: {exc}")
 
 
 class handler(BaseHTTPRequestHandler):
@@ -125,5 +126,5 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"ok")
 
-    def log_message(self, *args):  # silence Vercel access logs
+    def log_message(self, *args):
         pass
