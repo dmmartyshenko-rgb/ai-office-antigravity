@@ -1,0 +1,11 @@
+# Sample ~/.codex/config.toml for the /route loop.
+# Merge these keys into your existing ~/.codex/config.toml.
+# Do NOT remove or change existing marketplaces, plugins, or project entries.
+
+# Default model used by `codex exec` when --model is not passed.
+model = "gpt-5.6-sol"
+
+# Reviewer profile: same model at maximum reasoning effort, for the review pass.
+[profiles.reviewer]
+model = "gpt-5.6-sol"
+model_reasoning_effort = "xhigh"
