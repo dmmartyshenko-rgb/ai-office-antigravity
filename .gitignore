@@ -1,0 +1,19 @@
+# Персональные данные пользователя — НЕ коммитить в репозиторий
+data/inbox/*
+data/invoices/*
+data/outbox/*
+!data/inbox/.gitkeep
+!data/invoices/.gitkeep
+!data/invoices/example-2025-07.json
+!data/outbox/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+
+# OS
+.DS_Store

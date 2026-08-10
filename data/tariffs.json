@@ -1,0 +1,152 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "description": "Локальная база официальных тарифов региона для сверки квитанций ЖКУ. Значения — ШАБЛОННЫЕ (примерные), их обязан заменить пользователь/monitor_tariffs.py реальными данными с сайта РЭК/комитета по тарифам региона и ГИС ЖКХ. Тарифы на ресурсы регулирует региональный орган (ПП РФ №354). Плата за содержание/управление устанавливается решением ОСС (ст.156 ЖК РФ, ПП РФ №491) и в этот файл вносится из протокола ОСС.",
+    "region": "ЗАПОЛНИТЬ: субъект РФ",
+    "municipality": "ЗАПОЛНИТЬ: город/район",
+    "last_updated": "2026-08-10",
+    "sources": [
+      "РЭК/комитет по тарифам субъекта РФ (официальный сайт)",
+      "ГИС ЖКХ — dom.gosuslugi.ru",
+      "протокол ОСС (для платы за содержание и доп. услуги)"
+    ],
+    "disclaimer": "Значения ниже — примерные, для проверки работоспособности скриптов. НЕ используйте их в реальных расчётах без верификации по официальному источнику."
+  },
+  "services": {
+    "cold_water": {
+      "title": "Холодное водоснабжение (ХВС)",
+      "category": "communal_resource",
+      "regulator": "РЭК региона",
+      "npa": "ПП РФ №354",
+      "unit": "руб/м3",
+      "requires_oss": false,
+      "history": [
+        { "effective_from": "2025-07-01", "rate": 42.15, "source": "ЗАПОЛНИТЬ: реквизиты приказа РЭК" }
+      ]
+    },
+    "hot_water": {
+      "title": "Горячее водоснабжение (ГВС)",
+      "category": "communal_resource",
+      "regulator": "РЭК региона",
+      "npa": "ПП РФ №354",
+      "unit": "руб/м3",
+      "requires_oss": false,
+      "components": {
+        "note": "ГВС может тарифицироваться двухкомпонентно: теплоноситель (руб/м3) + тепловая энергия (руб/Гкал).",
+        "carrier_rate": 42.15,
+        "heat_energy_rate": 2450.00,
+        "heat_energy_unit": "руб/Гкал"
+      },
+      "history": [
+        { "effective_from": "2025-07-01", "rate": 215.40, "source": "ЗАПОЛНИТЬ: реквизиты приказа РЭК" }
+      ]
+    },
+    "water_disposal": {
+      "title": "Водоотведение",
+      "category": "communal_resource",
+      "regulator": "РЭК региона",
+      "npa": "ПП РФ №354",
+      "unit": "руб/м3",
+      "requires_oss": false,
+      "history": [
+        { "effective_from": "2025-07-01", "rate": 31.80, "source": "ЗАПОЛНИТЬ: реквизиты приказа РЭК" }
+      ]
+    },
+    "heating": {
+      "title": "Отопление",
+      "category": "communal_resource",
+      "regulator": "РЭК региона",
+      "npa": "ПП РФ №354",
+      "unit": "руб/Гкал",
+      "requires_oss": false,
+      "history": [
+        { "effective_from": "2025-07-01", "rate": 2450.00, "source": "ЗАПОЛНИТЬ: реквизиты приказа РЭК" }
+      ]
+    },
+    "electricity": {
+      "title": "Электроснабжение (одноставочный)",
+      "category": "communal_resource",
+      "regulator": "РЭК региона",
+      "npa": "ПП РФ №354",
+      "unit": "руб/кВтч",
+      "requires_oss": false,
+      "history": [
+        { "effective_from": "2025-07-01", "rate": 5.66, "source": "ЗАПОЛНИТЬ: реквизиты приказа РЭК" }
+      ]
+    },
+    "gas": {
+      "title": "Газоснабжение",
+      "category": "communal_resource",
+      "regulator": "РЭК региона",
+      "npa": "ПП РФ №354",
+      "unit": "руб/м3",
+      "requires_oss": false,
+      "history": [
+        { "effective_from": "2025-07-01", "rate": 8.10, "source": "ЗАПОЛНИТЬ: реквизиты приказа РЭК" }
+      ]
+    },
+    "tko": {
+      "title": "Обращение с ТКО (вывоз мусора)",
+      "category": "communal_resource",
+      "regulator": "РЭК региона (тариф регоператора)",
+      "npa": "ПП РФ №354",
+      "unit": "руб/м2 или руб/чел",
+      "requires_oss": false,
+      "history": [
+        { "effective_from": "2025-07-01", "rate": 4.20, "source": "ЗАПОЛНИТЬ: реквизиты приказа/норматив" }
+      ]
+    },
+    "maintenance": {
+      "title": "Содержание жилого помещения (общее имущество)",
+      "category": "maintenance",
+      "regulator": "решение ОСС (ст.156 ЖК РФ, ПП РФ №491)",
+      "npa": "ст.156, 162 ЖК РФ; ПП РФ №491, №290",
+      "unit": "руб/м2",
+      "requires_oss": true,
+      "history": [
+        { "effective_from": "2025-01-01", "rate": 28.50, "source": "ЗАПОЛНИТЬ: реквизиты протокола ОСС (дата, №)" }
+      ]
+    },
+    "current_repair": {
+      "title": "Текущий ремонт общего имущества",
+      "category": "maintenance",
+      "regulator": "решение ОСС",
+      "npa": "ст.156 ЖК РФ; ПП РФ №491",
+      "unit": "руб/м2",
+      "requires_oss": true,
+      "history": [
+        { "effective_from": "2025-01-01", "rate": 7.30, "source": "ЗАПОЛНИТЬ: реквизиты протокола ОСС" }
+      ]
+    },
+    "management": {
+      "title": "Управление МКД",
+      "category": "management",
+      "regulator": "решение ОСС / договор управления",
+      "npa": "ст.162 ЖК РФ; ПП РФ №416",
+      "unit": "руб/м2",
+      "requires_oss": true,
+      "history": [
+        { "effective_from": "2025-01-01", "rate": 5.00, "source": "ЗАПОЛНИТЬ: реквизиты протокола ОСС/договора" }
+      ]
+    },
+    "capital_repair": {
+      "title": "Взнос на капитальный ремонт",
+      "category": "capital_repair",
+      "regulator": "минимальный размер устанавливает субъект РФ (ст.169-170 ЖК РФ)",
+      "npa": "ст.169, 170 ЖК РФ",
+      "unit": "руб/м2",
+      "requires_oss": false,
+      "history": [
+        { "effective_from": "2025-01-01", "rate": 11.70, "source": "ЗАПОЛНИТЬ: НПА субъекта РФ о мин. размере взноса" }
+      ]
+    }
+  },
+  "additional_services_require_oss": {
+    "note": "Доп. услуги законны ТОЛЬКО при наличии решения ОСС и договора (ст.44-48 ЖК РФ). Без протокола ОСС начисление — навязанное. Заполнять из протоколов ОСС.",
+    "items": {
+      "intercom": { "title": "Домофон", "requires_oss": true, "oss_protocol": null, "rate": null },
+      "security": { "title": "Охрана/консьерж", "requires_oss": true, "oss_protocol": null, "rate": null },
+      "video": { "title": "Видеонаблюдение", "requires_oss": true, "oss_protocol": null, "rate": null }
+    }
+  }
+}
