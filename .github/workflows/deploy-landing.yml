@@ -1,0 +1,30 @@
+name: Deploy IIntegration Landing to Vercel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest --silent
+
+      - name: Prepare static site
+        run: |
+          mkdir -p /tmp/iintegration-landing
+          cp docs/landing/iintegration.html /tmp/iintegration-landing/index.html
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          cd /tmp/iintegration-landing
+          OUTPUT=$(vercel --token "$VERCEL_TOKEN" --yes --prod 2>&1) || true
+          echo "$OUTPUT"
+          URL=$(echo "$OUTPUT" | grep -oE 'https://[a-z0-9._-]+\.vercel\.app' | tail -1)
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Landing live at: $URL"
+          [ -n "$URL" ] || exit 1
