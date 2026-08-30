@@ -1,7 +1,7 @@
 # Hermes Megamap
 
 ## Статус
-Актив. Обновлено: 2026-08-29.
+Актив. Обновлено: 2026-08-30.
 
 ## Где лежит
 Репозиторий `ai-office-antigravity`, каталог `hermes-megamap/` (самодостаточен,
@@ -12,14 +12,16 @@
 
 ## Артефакты
 - `CLAUDE.md` — поведенческий контракт агента Hermes.
-- `.hermes/scripts/hermes_cli.py` — CLI: init / add-raw / consolidate / decay / status / lint.
+- `.hermes/scripts/hermes_cli.py` — CLI: init / add-raw / consolidate / decay / status / lint / ui / bot.
 - `.hermes/scripts/metabolism.py` — пайплайн Triage → Consolidate → Decay & Audit.
+- `.hermes/scripts/hermes_ui.py` — веб-дашборд «Экспедиционная карта» (127.0.0.1:8137).
+- `.hermes/scripts/telegram_bot.py` — приёмная в Telegram: голос/текст → буфер.
 - `.hermes/scripts/lint_megamap.py` — жёсткая валидация инвариантов (код 0 = зелёный).
 - `.hermes/scripts/test_scenario.py` — воспроизводимый тест в temp-каталоге.
 - `.hermes/config.json` — пороги decay, gravity, TTL буфера.
 
 ## Следующий шаг
-обкатать на реальном потоке заметок пользователя (встречи, контакты) и откалибровать пороги decay в config.json
+создать бота у BotFather, вписать chat_id в config.json и обкатать голосовой поток
 
 ## Риски и блокеры
 —

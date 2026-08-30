@@ -79,8 +79,11 @@ def main() -> int:
         check("«Следующий шаг» обновлён из заметки",
               "прогнать consolidate на реальных заметках" in map_td)
         log_td = (root / "logs/projects/test-drive.log.md").read_text(encoding="utf-8")
-        check("встреча записана в журнал (слой 3)", "Встреча по запуску" in log_td
+        check("встреча записана в журнал (слой 3)", "— Встреча по запуску\n" in log_td
               and "**Почему:** CLI — самый короткий путь" in log_td)
+        log_as = (root / "logs/relationships/anna-smirnova.log.md").read_text(encoding="utf-8")
+        check("чистая @new-директива не плодит запись «Заметка»",
+              "Заметка" not in log_as and "Домен создан" in log_as)
         check("новая запись журнала — сверху (append-only, новые выше старых)",
               log_td.find("Встреча по запуску") < log_td.find("Домен создан"))
         check("gravity-заметка привязалась к test-drive",
@@ -129,6 +132,10 @@ def main() -> int:
         check("Friend Health Score пересчитан и контакт в Паузе",
               re.search(r"Friend Health Score\n0/100", map_as) is not None
               and "Пауза (авто-decay" in map_as)
+        cli(root, "decay")  # повторный прогон: авто-записи не сбрасывают часы
+        map_as = (root / "domains/relationships/anna-smirnova.md").read_text(encoding="utf-8")
+        check("повторный decay не воскрешает счётчик (score остаётся 0)",
+              re.search(r"Friend Health Score\n0/100", map_as) is not None)
         out = cli(root, "lint")
         check("после decay линтер зелёный", "OK:" in out)
 
@@ -145,6 +152,99 @@ def main() -> int:
         out = cli(root, "status")
         check("status показывает INDEX и буфер",
               "HERMES MEGAMAP" in out and "Буфер (L0): 1" in out)
+
+        print("10. Веб-дашборд: API")
+        import json
+        import socket
+        import urllib.request
+        s = socket.socket()
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+        s.close()
+        env = dict(os.environ, HERMES_ROOT=str(root))
+        srv = subprocess.Popen([sys.executable, str(SCRIPTS / "hermes_ui.py"),
+                                str(port)], cwd=root, env=env,
+                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        try:
+            state = None
+            for _ in range(40):
+                try:
+                    with urllib.request.urlopen(
+                            f"http://127.0.0.1:{port}/api/state", timeout=2) as r:
+                        state = json.loads(r.read().decode())
+                    break
+                except OSError:
+                    import time
+                    time.sleep(0.25)
+            check("GET /api/state отвечает", state is not None)
+            check("state: 2 домена, линтер зелёный",
+                  state and len(state["domains"]) == 2 and state["lint"]["ok"])
+            rel = next(d for d in state["domains"] if d["type"] == "relationship")
+            check("state: у связи есть health и позиция на радаре",
+                  rel.get("health") is not None and "x" in rel and "ring" in rel)
+            check("state: health остывшего контакта честный (0, не сброшен decay-записью)",
+                  rel["health"] == 0 and (rel["days"] or 0) >= 59)
+            req = urllib.request.Request(
+                f"http://127.0.0.1:{port}/api/add-raw",
+                data=json.dumps({"text": "@test-drive заметка из дашборда"}).encode(),
+                method="POST")
+            with urllib.request.urlopen(req, timeout=5) as r:
+                out = json.loads(r.read().decode())["output"]
+            check("POST /api/add-raw кладёт в буфер (source=ui)",
+                  "принята" in out and any(
+                      "source: ui" in p.read_text(encoding="utf-8")
+                      for p in (root / "buffer").glob("*.md")))
+            with urllib.request.urlopen(
+                    f"http://127.0.0.1:{port}/api/domain/test-drive", timeout=5) as r:
+                dom = json.loads(r.read().decode())
+            check("GET /api/domain: слои 2+3 отданы",
+                  "Следующий шаг" in dom["sections"] and len(dom["entries"]) >= 3)
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=5) as r:
+                page = r.read().decode()
+            check("страница приложения отдаётся", "Hermes Megamap" in page
+                  and "Радар" in page)
+        finally:
+            srv.terminate()
+            srv.wait(timeout=10)
+
+        print("11. Telegram-бот: обработчик")
+        os.environ["HERMES_ROOT"] = str(root)
+        import importlib
+        import metabolism
+        importlib.reload(metabolism)
+        import telegram_bot
+        importlib.reload(telegram_bot)
+        reply = telegram_bot.handle_update(
+            {"update_id": 1, "message": {"chat": {"id": 999}, "text": "привет"}},
+            "tok", [42])
+        check("чужой chat_id отклонён с подсказкой", "999" in reply and "закрыт" in reply)
+        reply = telegram_bot.handle_update(
+            {"update_id": 2, "message": {"chat": {"id": 42},
+                                         "text": "@test-drive ! Из телеграма\nПроверка бота"}},
+            "tok", [42])
+        check("текст из Telegram принят в буфер", "Принято в буфер" in reply)
+        fake_audio = root / "cold" / "sources" / "voice" / "fake.ogg"
+        fake_audio.parent.mkdir(parents=True, exist_ok=True)
+        fake_audio.write_bytes(b"OggS")
+        reply = telegram_bot.handle_update(
+            {"update_id": 3, "message": {"chat": {"id": 42},
+                                         "voice": {"file_id": "F1"}}},
+            "tok", [42],
+            transcriber=lambda p: "@test-drive тестовая расшифровка голосовой",
+            downloader=lambda t, f: fake_audio)
+        check("голос расшифрован и принят", "Расшифровано" in reply)
+        cli(root, "consolidate", expect=2)  # сирота всё ещё в буфере
+        log_td = (root / "logs/projects/test-drive.log.md").read_text(encoding="utf-8")
+        check("голосовая запись в журнале помечена [голос]",
+              "[голос]" in log_td and "тестовая расшифровка" in log_td)
+        reply = telegram_bot.handle_update(
+            {"update_id": 4, "message": {"chat": {"id": 42},
+                                         "voice": {"file_id": "F2"}}},
+            "tok", [42],
+            transcriber=lambda p: None,
+            downloader=lambda t, f: fake_audio)
+        check("голос без расшифровки сохранён с заглушкой",
+              "расшифровка недоступна" in reply)
     finally:
         os.chdir("/")
         shutil.rmtree(tmp, ignore_errors=True)

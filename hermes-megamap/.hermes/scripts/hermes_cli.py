@@ -8,6 +8,8 @@
   hermes decay                — Decay & Audit: health-score, живучесть, TTL буфера
   hermes status               — дашборд Слоя 1 (INDEX + буфер)
   hermes lint                 — проверка инвариантов (код 0 = зелёный)
+  hermes ui [порт]            — веб-дашборд на http://127.0.0.1:8137
+  hermes bot                  — Telegram-бот приёмной (голос/текст → буфер)
 
 Синтаксис заметки для add-raw (первая строка):
   @<домен>                          — привязать к существующему домену
@@ -85,6 +87,20 @@ def cmd_lint(_args) -> int:
     return subprocess.call([sys.executable, str(lint)])
 
 
+def cmd_ui(args) -> int:
+    import hermes_ui
+    if args.port:
+        sys.argv = [sys.argv[0], str(args.port)]
+    else:
+        sys.argv = [sys.argv[0]]
+    return hermes_ui.main()
+
+
+def cmd_bot(_args) -> int:
+    import telegram_bot
+    return telegram_bot.main()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="hermes", description=__doc__,
@@ -99,6 +115,10 @@ def main() -> int:
     sub.add_parser("decay", help="Decay & Audit").set_defaults(fn=cmd_decay)
     sub.add_parser("status", help="дашборд Слоя 1").set_defaults(fn=cmd_status)
     sub.add_parser("lint", help="проверка инвариантов").set_defaults(fn=cmd_lint)
+    p_ui = sub.add_parser("ui", help="веб-дашборд (127.0.0.1)")
+    p_ui.add_argument("port", nargs="?", type=int, help="порт (по умолчанию 8137)")
+    p_ui.set_defaults(fn=cmd_ui)
+    sub.add_parser("bot", help="Telegram-бот приёмной").set_defaults(fn=cmd_bot)
     args = parser.parse_args()
     return args.fn(args)
 

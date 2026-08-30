@@ -28,9 +28,16 @@
   `domains/` и `INDEX.md` — сырьё попадает только в `buffer/`.
 
 ## Инструменты
-- CLI: `python3 .hermes/scripts/hermes_cli.py {init|add-raw|consolidate|decay|status|lint}`.
+- CLI: `python3 .hermes/scripts/hermes_cli.py {init|add-raw|consolidate|decay|status|lint|ui|bot}`.
 - Метаболический пайплайн (Triage → Consolidate → Decay & Audit):
   `.hermes/scripts/metabolism.py`.
-- Пороговые настройки (TTL буфера, gravity, decay): `.hermes/config.json`.
+- Веб-дашборд «Экспедиционная карта»: `hermes ui` → http://127.0.0.1:8137
+  (карточки доменов, радар связей, экран домена; тонкая оболочка над ядром).
+- Telegram-бот приёмной: `hermes bot` (`.hermes/scripts/telegram_bot.py`) —
+  голосовые и текстовые заметки в буфер; белый список chat_id в config.json,
+  токен в переменной TELEGRAM_BOT_TOKEN; голосовые оригиналы —
+  в `cold/sources/voice/`, расшифровка faster-whisper (опционально).
+- Пороговые настройки (TTL буфера, gravity, decay, ui, telegram):
+  `.hermes/config.json`.
 - Реляционные метаданные (entries, edges, audit_log): `.hermes/metadata.db`
   (SQLite, создаётся автоматически, в Git не хранится).

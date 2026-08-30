@@ -16,14 +16,20 @@
 Всё в `hermes-megamap/` (самодостаточный каталог, переносим в отдельный репозиторий):
 - `CLAUDE.md` — контракт агента; `INDEX.md` — слой 1 (≤ 60 строк);
 - `buffer/`, `domains/{projects,relationships}/`, `logs/…/*.log.md`, `cold/sources/`;
-- `.hermes/scripts/hermes_cli.py` — CLI (init/add-raw/consolidate/decay/status/lint);
+- `.hermes/scripts/hermes_cli.py` — CLI (init/add-raw/consolidate/decay/status/lint/ui/bot);
 - `.hermes/scripts/metabolism.py` — метаболический пайплайн + SQLite metadata.db;
+- `.hermes/scripts/hermes_ui.py` — веб-дашборд «Экспедиционная карта»: карточки,
+  радар связей, экран домена; stdlib-сервер на 127.0.0.1:8137;
+- `.hermes/scripts/telegram_bot.py` — приёмная: голос/текст → Triage-буфер,
+  белый список chat_id, расшифровка faster-whisper (опционально);
 - `.hermes/scripts/lint_megamap.py` — валидация инвариантов;
-- `.hermes/scripts/test_scenario.py` — воспроизводимый тестовый сценарий (PASS).
+- `.hermes/scripts/test_scenario.py` — 34 проверки в temp-каталоге (PASS);
+- дизайн-макет (3 экрана, «Экспедиционная карта») — артефакт
+  claude.ai/code/artifact/a4439f45-58d2-4f1f-b803-351da1af5766.
 
 ## Следующий шаг
-Обкатать на реальном потоке заметок (встречи, контакты), откалибровать пороги
-в `.hermes/config.json`; решить, выносить ли в отдельный репозиторий.
+Пользователь заводит бота у BotFather (токен → TELEGRAM_BOT_TOKEN, chat_id →
+config.json) и обкатывает голосовой поток; по итогам — калибровка порогов decay.
 
 ## Риски / открытые вопросы
 - Кластеризация consolidate — эвристическая (директивы @ + gravity по упоминаниям);

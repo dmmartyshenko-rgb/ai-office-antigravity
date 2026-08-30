@@ -211,11 +211,15 @@ def log_prepend(root: Path, log_rel: str, title: str, what: str, why: str,
 
 
 def last_log_date(root: Path, log_rel: str):
+    """Дата последней НАСТОЯЩЕЙ активности: служебные записи самого движка
+    (Авто-пауза и т.п.) не в счёт — иначе decay сбрасывал бы себе же часы."""
     path = root / log_rel
     if not path.is_file():
         return None
-    dates = re.findall(r"^### (\d{4}-\d{2}-\d{2})", path.read_text(encoding="utf-8"),
-                       re.MULTILINE)
+    dates = [d for d, title in
+             re.findall(r"^### (\d{4}-\d{2}-\d{2}) \d{2}:\d{2} — (.+)$",
+                        path.read_text(encoding="utf-8"), re.MULTILINE)
+             if not title.strip().startswith("Авто-")]
     if not dates:
         return None
     return datetime.strptime(max(dates), "%Y-%m-%d")
@@ -243,9 +247,10 @@ def template(root: Path, kind: str) -> str:
 
 # ---------------------------------------------------------------- 1. TRIAGE
 
-def triage(text: str, root: Path = None) -> Path | None:
+def triage(text: str, root: Path = None, source: str = "cli") -> Path | None:
     """Streaming ingestion: сырая заметка → /buffer/, статус pending.
-    По контракту НЕ трогает domains/ и INDEX.md."""
+    По контракту НЕ трогает domains/ и INDEX.md.
+    source: cli | ui | telegram | telegram-voice — метка канала поступления."""
     root = root or ROOT
     text = text.strip()
     if not text:
@@ -263,7 +268,7 @@ def triage(text: str, root: Path = None) -> Path | None:
     fname = f"{now.strftime('%Y-%m-%d_%H%M%S')}_{digest[:12]}.md"
     rel = f"buffer/{fname}"
     body = (f"---\nhash: {digest}\ncreated: {now.isoformat(timespec='seconds')}\n"
-            f"status: pending\n---\n{text}\n")
+            f"source: {source}\nstatus: pending\n---\n{text}\n")
     (root / rel).write_text(body, encoding="utf-8")
     conn.execute(
         "INSERT INTO entries (hash, path, status, created_at) VALUES (?, ?, 'pending', ?)",
@@ -276,14 +281,15 @@ def triage(text: str, root: Path = None) -> Path | None:
 
 # ------------------------------------------------------------ 2. CONSOLIDATE
 
-def _read_note(path: Path) -> tuple[str, str]:
+def _read_note(path: Path) -> tuple[str, str, str]:
     raw = path.read_text(encoding="utf-8")
     m = re.match(r"---\n(.*?)\n---\n", raw, re.DOTALL)
     front = m.group(1) if m else ""
     body = raw[m.end():] if m else raw
     hm = re.search(r"^hash:\s*(\S+)", front, re.MULTILINE)
+    sm = re.search(r"^source:\s*(\S+)", front, re.MULTILINE)
     return (hm.group(1) if hm else hashlib.sha256(raw.encode()).hexdigest(),
-            body.strip())
+            body.strip(), sm.group(1) if sm else "cli")
 
 
 def _parse_note(body: str) -> dict:
@@ -306,7 +312,9 @@ def _parse_note(body: str) -> dict:
         if i == 0 and s.startswith("@"):
             note["target"] = s.split()[0][1:]
             tail = s[len(s.split()[0]):].strip()
-            if tail:
+            if tail.startswith("! "):          # «@домен ! Заголовок» одной строкой
+                note["title"] = tail[2:].strip()
+            elif tail:
                 note["text_lines"].append(tail)
             continue
         if s.startswith("! "):
@@ -321,6 +329,7 @@ def _parse_note(body: str) -> dict:
             continue
         note["text_lines"].append(s)
     text = " ".join(l for l in note["text_lines"] if l).strip()
+    note["empty"] = not text and not note["title"] and not note["next_step"]
     if not note["title"]:
         note["title"] = (text[:60] + "…") if len(text) > 60 else (text or "Заметка")
     note["what"] = text or note["title"]
@@ -382,7 +391,7 @@ def consolidate(root: Path = None) -> int:
     files = sorted((root / "buffer").glob("*.md"))
     files.sort(key=lambda p: 0 if _read_note(p)[1].startswith("@new-") else 1)
     for f in files:
-        digest, body = _read_note(f)
+        digest, body, source = _read_note(f)
         if not body:
             continue
         note = _parse_note(body)
@@ -395,6 +404,19 @@ def consolidate(root: Path = None) -> int:
             else:
                 domains[note["new"]["slug"]] = _create_domain(root, note["new"], now)
                 audit(conn, "domain-created", note["new"]["slug"])
+            if note["empty"]:
+                # чистая директива создания: домен заведён, дублировать записью
+                # «Заметка» нечего — оригинал сразу в холодный архив
+                dest = root / "cold" / "sources" / f.name
+                shutil.move(str(f), dest)
+                conn.execute("UPDATE entries SET status='processed', domain=?, "
+                             "processed_at=?, path=? WHERE hash=?",
+                             (note["new"]["slug"], now.isoformat(timespec="seconds"),
+                              f"cold/sources/{f.name}", digest))
+                conn.commit()
+                processed += 1
+                print(f"consolidate: {f.name} → создан домен «{note['new']['slug']}»")
+                continue
 
         target = note["target"]
         if target not in domains:
@@ -409,8 +431,11 @@ def consolidate(root: Path = None) -> int:
             continue
 
         info = domains[target]
-        # Слой 3: дельта в журнал
-        log_prepend(root, info["log"], note["title"], note["what"], note["why"], now)
+        # Слой 3: дельта в журнал (голосовые заметки помечаются источником)
+        title = note["title"]
+        if source == "telegram-voice":
+            title += " [голос]"
+        log_prepend(root, info["log"], title, note["what"], note["why"], now)
         # Слой 2: обновление снимка состояния
         map_path = root / info["map"]
         text = map_path.read_text(encoding="utf-8")
