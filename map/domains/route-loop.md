@@ -18,9 +18,10 @@ GPT-5.6 Sol через Codex CLI — исполнитель (пишет и чи�
 - `.claude/skills/route/config.sample.toml` — образец конфигурации.
 
 ## Следующий шаг
-Пользователь выбирает среду запуска: (а) открыть api.openai.com в сетевой
-политике облачного окружения и передать токен через env `OPENAI_API_KEY`,
-либо (б) запускать петлю на локальном Mac по HANDOFF §7.
+Запуск на Mac (выбор пользователя 2026-08-30): HANDOFF §7 (config.toml +
+`codex login` + ping), затем `/route` на ветке `claude/megamapping-build-tki2ra`
+с брифом `docs/research/contact-mapping-build-brief.md` — это будет первая
+боевая обкатка петли.
 
 ## Риски / открытые вопросы
 - Подтверждено 2026-08-30: облачное окружение режет api.openai.com
