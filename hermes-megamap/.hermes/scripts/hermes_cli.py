@@ -96,8 +96,9 @@ def cmd_ui(args) -> int:
     return hermes_ui.main()
 
 
-def cmd_bot(_args) -> int:
+def cmd_bot(args) -> int:
     import telegram_bot
+    sys.argv = [sys.argv[0]] + (["--setup"] if args.setup else [])
     return telegram_bot.main()
 
 
@@ -118,7 +119,10 @@ def main() -> int:
     p_ui = sub.add_parser("ui", help="веб-дашборд (127.0.0.1)")
     p_ui.add_argument("port", nargs="?", type=int, help="порт (по умолчанию 8137)")
     p_ui.set_defaults(fn=cmd_ui)
-    sub.add_parser("bot", help="Telegram-бот приёмной").set_defaults(fn=cmd_bot)
+    p_bot = sub.add_parser("bot", help="Telegram-бот приёмной")
+    p_bot.add_argument("--setup", action="store_true",
+                       help="первый написавший становится владельцем (chat_id → config)")
+    p_bot.set_defaults(fn=cmd_bot)
     args = parser.parse_args()
     return args.fn(args)
 
