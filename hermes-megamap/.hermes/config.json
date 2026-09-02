@@ -1,0 +1,19 @@
+{
+  "buffer_ttl_days": 7,
+  "gravity": {
+    "min_score": 1
+  },
+  "decay": {
+    "project_pause_days": 21,
+    "contact_pause_days": 45,
+    "health_decay_per_day": 2,
+    "health_pause_score": 30
+  },
+  "ui": {
+    "host": "127.0.0.1",
+    "port": 8137
+  },
+  "telegram": {
+    "allowed_chat_ids": []
+  }
+}
