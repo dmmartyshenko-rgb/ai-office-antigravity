@@ -245,6 +245,21 @@ def main() -> int:
             downloader=lambda t, f: fake_audio)
         check("голос без расшифровки сохранён с заглушкой",
               "расшифровка недоступна" in reply)
+
+        print("12. Telegram-бот: режим --setup (авторегистрация владельца)")
+        allowed = []
+        reply = telegram_bot.handle_update(
+            {"update_id": 5, "message": {"chat": {"id": 777}, "text": "/start"}},
+            "tok", allowed, setup=True)
+        cfg = json.loads((root / ".hermes" / "config.json").read_text(encoding="utf-8"))
+        check("первый написавший стал владельцем (config.json обновлён)",
+              "владелец" in reply and cfg["telegram"]["allowed_chat_ids"] == [777]
+              and allowed == [777])
+        reply = telegram_bot.handle_update(
+            {"update_id": 6, "message": {"chat": {"id": 888}, "text": "привет"}},
+            "tok", allowed, setup=True)
+        check("второй чужой chat_id в setup-режиме уже отклоняется",
+              "закрыт" in reply and cfg["telegram"]["allowed_chat_ids"] == [777])
     finally:
         os.chdir("/")
         shutil.rmtree(tmp, ignore_errors=True)

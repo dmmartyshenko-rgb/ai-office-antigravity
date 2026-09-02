@@ -103,15 +103,32 @@ def transcribe(path: Path) -> str | None:
         return None
 
 
+def register_owner(chat_id: int) -> None:
+    """Вписывает chat_id владельца в .hermes/config.json (режим --setup)."""
+    cfg_path = ROOT / ".hermes" / "config.json"
+    cfg = json.loads(cfg_path.read_text(encoding="utf-8")) if cfg_path.is_file() else {}
+    cfg.setdefault("telegram", {})["allowed_chat_ids"] = [chat_id]
+    cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n",
+                        encoding="utf-8")
+
+
 def handle_update(update: dict, token: str, allowed: list,
-                  transcriber=transcribe, downloader=download_voice) -> str | None:
+                  transcriber=transcribe, downloader=download_voice,
+                  setup: bool = False) -> str | None:
     """Обрабатывает один update; возвращает текст ответа пользователю.
-    transcriber/downloader параметризованы для тестов."""
+    transcriber/downloader параметризованы для тестов.
+    setup=True: пока белый список пуст, первый написавший становится владельцем
+    (chat_id сохраняется в config.json автоматически)."""
     msg = update.get("message") or {}
     chat_id = (msg.get("chat") or {}).get("id")
     if chat_id is None:
         return None
     if chat_id not in allowed:
+        if setup and not allowed:
+            register_owner(chat_id)
+            allowed.append(chat_id)
+            print(f"setup: владелец зарегистрирован, chat_id {chat_id} → config.json")
+            return ("Готово: вы владелец этой памяти, chat_id сохранён.\n\n" + HELP)
         return (f"Ваш chat_id: {chat_id}\n"
                 f"Приём закрыт: добавьте его в .hermes/config.json → "
                 f"telegram.allowed_chat_ids и перезапустите бота.")
@@ -141,12 +158,15 @@ def handle_update(update: dict, token: str, allowed: list,
 
 
 def main() -> int:
+    setup = "--setup" in sys.argv
     token = _token()
     allowed = mb.load_config(ROOT).get("telegram", {}).get("allowed_chat_ids", [])
     me = tg(token, "getMe", timeout=20)
     print(f"Бот @{me['username']} запущен. Хранилище: {ROOT}")
     if not allowed:
-        print("Белый список пуст — бот только сообщает chat_id (приём закрыт).")
+        print("Белый список пуст — первый написавший станет владельцем (--setup)."
+              if setup else
+              "Белый список пуст — бот только сообщает chat_id (приём закрыт).")
     offset_file = ROOT / ".hermes" / "tg_offset"
     offset = int(offset_file.read_text()) if offset_file.is_file() else 0
     while True:
@@ -164,7 +184,7 @@ def main() -> int:
             offset = max(offset, u["update_id"])
             offset_file.write_text(str(offset))
             try:
-                reply = handle_update(u, token, allowed)
+                reply = handle_update(u, token, allowed, setup=setup)
             except Exception as e:
                 reply = f"Ошибка обработки: {e}"
                 print(reply)
