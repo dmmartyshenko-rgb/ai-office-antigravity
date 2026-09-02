@@ -2,3 +2,4 @@
 .hermes/metadata.db
 .hermes/tg_offset
 __pycache__/
+.venv/
