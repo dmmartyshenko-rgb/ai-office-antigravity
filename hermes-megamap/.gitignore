@@ -3,3 +3,4 @@
 .hermes/tg_offset
 __pycache__/
 .venv/
+.hermes/logs/
