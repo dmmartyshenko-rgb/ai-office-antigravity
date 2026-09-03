@@ -5,7 +5,7 @@
 
 | Домен | Статус | Суть | Карта |
 |---|---|---|---|
-| hermes-core | активен | Главный агент Hermes: харнес, конвейер ролей, ведение мегакарты | [domains/hermes-core.md](domains/hermes-core.md) |
+| hermes-core | активен | Главный агент Hermes: контракт H-DHO-2026, харнес, каскад проверок, конвейер ролей, мегакарта | [domains/hermes-core.md](domains/hermes-core.md) |
 | megamap | активен | Трёхслойная внешняя память среды (этот самый механизм) | [domains/megamap.md](domains/megamap.md) |
 | iintegration | активен | Группа «ИИнтеграция»: философия работы с ЛПР + лендинг | [domains/iintegration.md](domains/iintegration.md) |
 | contact-mapping | активен | Исследование: решает ли мегакартирование проблему поддержания связей | [domains/contact-mapping.md](domains/contact-mapping.md) |
