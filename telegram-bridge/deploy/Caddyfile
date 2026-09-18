@@ -1,0 +1,16 @@
+# /etc/caddy/Caddyfile — reverse proxy with automatic Let's Encrypt TLS.
+# Only the bridge is exposed; everything else on the host stays on localhost.
+v2202609416472518907.goodsrv.de {
+	reverse_proxy 127.0.0.1:8080
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/tg-bridge-access.log
+		format json
+	}
+}

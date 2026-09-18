@@ -12,6 +12,7 @@
 | rezonans | активен | «Резонанс» — индекс музыкального спроса: методология + форма участия | [domains/rezonans.md](domains/rezonans.md) |
 | mimo-bot | пауза | MiMo Code: Telegram-бот-кодер на Vercel + установка Xiaomi MiMo CLI | [domains/mimo-bot.md](domains/mimo-bot.md) |
 | zhkh-agent | активен | ЖКХ-агент: кейс №1 (Моск. обл.) — тарифная база собрана, ждёт прогона | [domains/zhkh-agent.md](domains/zhkh-agent.md) |
+| telegram-bridge | активен | Мост к пользовательской сессии Telegram на netcup: HTTPS-API для ассистента | [domains/telegram-bridge.md](domains/telegram-bridge.md) |
 | route-loop | пауза | Двухмодельная петля сборки: Fable 5 планирует и ревьюит, GPT-5.6 Sol пишет | [domains/route-loop.md](domains/route-loop.md) |
 
 Журналы решений — в [journal/](journal/), по файлу на домен.

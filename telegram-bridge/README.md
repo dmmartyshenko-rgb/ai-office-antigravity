@@ -1,0 +1,66 @@
+# Telegram Bridge (netcup)
+
+Постоянный мост к **пользовательской** сессии Telegram (Telethon/MTProto, от лица владельца, не бот). Наружу — только HTTPS-API за Bearer-токеном через Caddy (авто-TLS Let's Encrypt) на `https://v2202609416472518907.goodsrv.de`.
+
+Это полный доступ к Telegram владельца: токен и файлы `.env` / `session.txt` — секреты уровня пароля от аккаунта.
+
+## Установка на сервере (152.53.225.111, Debian 13)
+
+```bash
+git clone https://github.com/dmmartyshenko-rgb/ai-office-antigravity.git
+cd ai-office-antigravity && git checkout claude/telegram-bridge-netcup-mtlo1x
+sudo bash telegram-bridge/deploy/install.sh        # спросит api_hash с my.telegram.org, сгенерирует токен
+sudo -u tgbridge TG_BRIDGE_ENV=/opt/tg-bridge/.env /opt/tg-bridge/venv/bin/python /opt/tg-bridge/login.py
+sudo systemctl restart tg-bridge
+sudo bash telegram-bridge/deploy/check_acceptance.sh
+```
+
+`login.py` запускается один раз: спрашивает телефон, код из Telegram и пароль 2FA, сохраняет StringSession в `/opt/tg-bridge/session.txt` (chmod 600). Сервис при старте только читает этот файл; если сессия невалидна — `/health` отдаёт `authorized:false`, остальные эндпоинты — 503, сервис не падает.
+
+## Архитектура
+
+- **FastAPI + uvicorn** — слушает только `127.0.0.1:8080`
+- **Caddy** — реверс-прокси c авто-TLS на 443; порт 80 нужен только для ACME-челленджа
+- **systemd** (`tg-bridge.service`) — `Restart=always`, непривилегированный пользователь `tgbridge`, sandbox-хардening
+- **ufw** — входящие только 22/80/443 (плюс проверить облачный firewall в панели netcup)
+- **Аудит-лог** `/opt/tg-bridge/audit.log` — JSON-строки: время, эндпоинт, peer; тел сообщений нет
+- **Rate-limit** на `/send` — 20 запросов/мин (настраивается в `.env`)
+
+## API
+
+Все эндпоинты требуют `Authorization: Bearer <токен>` (сравнение постоянного времени). Без токена — 401.
+
+| Метод | Путь | Параметры | Ответ |
+|---|---|---|---|
+| GET | `/health` | — | `{status, connected, authorized}` |
+| GET | `/dialogs` | `limit` (≤100), `offset` | id, тип (user/group/channel), имя, последнее сообщение (текст/дата/направление/прочитано), непрочитанные |
+| GET | `/messages` | `peer`, `limit` (≤100), `offset_id` | id, дата, отправитель, текст, тип, reply_to |
+| POST | `/send` | `{peer, text, reply_to?}` | `{id, date}` |
+| POST | `/read` | `{peer}` | `{ok:true}` |
+
+`peer` — `me` (Избранное), `@username`, телефон или числовой id.
+
+Ошибки Telegram — понятный JSON, не 500: flood wait → 429 `{"error":"flood_wait","retry_after_seconds":N}`; невалидный peer → 400 `{"error":"invalid_peer"}`; нет прав писать → 403; прочие RPC-ошибки → 502 с кодом и сообщением.
+
+## Примеры
+
+```bash
+TOKEN=...   # из /opt/tg-bridge/.env
+BASE=https://v2202609416472518907.goodsrv.de
+
+curl -H "Authorization: Bearer $TOKEN" "$BASE/health"
+curl -H "Authorization: Bearer $TOKEN" "$BASE/dialogs?limit=5"
+curl -H "Authorization: Bearer $TOKEN" "$BASE/messages?peer=me&limit=10"
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"peer":"me","text":"привет"}' "$BASE/send"
+```
+
+## Эксплуатация
+
+```bash
+systemctl status tg-bridge        # состояние сервиса
+journalctl -u tg-bridge -f        # логи
+tail -f /opt/tg-bridge/audit.log  # аудит запросов
+```
+
+Отзыв доступа: сменить `TG_BRIDGE_TOKEN` в `.env` и перезапустить сервис; полный отзыв — завершить сессию в Telegram (Настройки → Устройства) и удалить `session.txt`.

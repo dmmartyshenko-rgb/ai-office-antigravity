@@ -1,0 +1,28 @@
+[Unit]
+Description=Telegram user-session bridge (FastAPI + Telethon)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tgbridge
+Group=tgbridge
+WorkingDirectory=/opt/tg-bridge
+Environment=TG_BRIDGE_ENV=/opt/tg-bridge/.env
+ExecStart=/opt/tg-bridge/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8080
+Restart=always
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/tg-bridge
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=multi-user.target
