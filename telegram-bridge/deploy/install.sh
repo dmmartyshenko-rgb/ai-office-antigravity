@@ -66,15 +66,14 @@ mkdir -p /var/log/caddy && chown caddy:caddy /var/log/caddy
 systemctl enable caddy
 systemctl restart caddy
 
-echo "==> Firewall: allow only 22 (SSH), 80 (ACME), 443 (API)"
+echo "==> Firewall: allow only 22 (SSH) and 443 (API); Caddy gets TLS via 443 (ALPN)"
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow 22/tcp
-ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
 echo "    NOTE: also check the netcup cloud firewall in the customer panel —"
-echo "    only 22/80/443 inbound should be open there as well."
+echo "    only 22 and 443 inbound should be open there as well."
 
 echo "==> Starting service (will report authorized:false until login)"
 systemctl restart tg-bridge

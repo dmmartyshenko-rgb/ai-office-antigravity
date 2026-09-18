@@ -6,6 +6,19 @@
 
 ## Установка на сервере (152.53.225.111, Debian 13)
 
+### Проще всего — через веб-консоль netcup (без SSH и ключей)
+
+Панель netcup → SCP → сервер → **Console**, вход `root` по паролю. В консоли две строки:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dmmartyshenko-rgb/ai-office-antigravity/claude/telegram-bridge-netcup-mtlo1x/telegram-bridge/deploy/bootstrap.sh -o /root/tgb.sh
+bash /root/tgb.sh
+```
+
+`bootstrap.sh` сам: клонирует репозиторий, ставит сервис (спросит api_hash), проводит вход в Telegram (телефон, код, 2FA), запускает приёмку и печатает `BASE_URL` и `TOKEN`. От человека — только api_hash, код из Telegram и 2FA.
+
+### Или вручную (если уже есть SSH)
+
 ```bash
 git clone https://github.com/dmmartyshenko-rgb/ai-office-antigravity.git
 cd ai-office-antigravity && git checkout claude/telegram-bridge-netcup-mtlo1x
@@ -20,9 +33,9 @@ sudo bash telegram-bridge/deploy/check_acceptance.sh
 ## Архитектура
 
 - **FastAPI + uvicorn** — слушает только `127.0.0.1:8080`
-- **Caddy** — реверс-прокси c авто-TLS на 443; порт 80 нужен только для ACME-челленджа
+- **Caddy** — реверс-прокси c авто-TLS на 443; сертификат берётся через 443 (TLS-ALPN-01), порт 80 не нужен
 - **systemd** (`tg-bridge.service`) — `Restart=always`, непривилегированный пользователь `tgbridge`, sandbox-хардening
-- **ufw** — входящие только 22/80/443 (плюс проверить облачный firewall в панели netcup)
+- **ufw** — входящие только 22 и 443 (плюс проверить облачный firewall в панели netcup)
 - **Аудит-лог** `/opt/tg-bridge/audit.log` — JSON-строки: время, эндпоинт, peer; тел сообщений нет
 - **Rate-limit** на `/send` — 20 запросов/мин (настраивается в `.env`)
 

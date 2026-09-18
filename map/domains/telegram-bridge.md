@@ -23,9 +23,10 @@
 - `telegram-bridge/README.md` — инструкция и API.
 
 ## Следующий шаг
-Владелец на сервере: клонировать ветку → `install.sh` (спросит api_hash с
-my.telegram.org) → `login.py` → `check_acceptance.sh`. Проверить облачный
-firewall в панели netcup (только 22/80/443).
+Владелец в веб-консоли netcup (без SSH): две строки — `curl ... bootstrap.sh`
++ `bash /root/tgb.sh`. Скрипт клонирует, ставит, логинит в Telegram и гоняет
+приёмку сам; спросит только api_hash, код Telegram и 2FA. Проверить облачный
+firewall в панели netcup (только 22 и 443).
 
 ## Риски / открытые вопросы
 - Токен API = полный доступ к Telegram владельца; хранить как пароль.

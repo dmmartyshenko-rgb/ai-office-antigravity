@@ -35,9 +35,9 @@ CODE=$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "Content-Type: applica
 [ "$CODE" = "401" ] || ALL401=1
 check "401 without token" $ALL401 "got non-401"
 
-echo "== 5. Only 22/80/443 open on the host firewall"
-UFW=$(ufw status | grep ALLOW | grep -vE '(^| )(22|80|443)/tcp' | grep -v '(v6)')
-[ -z "$UFW" ]; check "ufw: only 22/80/443" $? "$UFW"
+echo "== 5. Only 22/443 open on the host firewall"
+UFW=$(ufw status | grep ALLOW | grep -vE '(^| )(22|443)/tcp' | grep -v '(v6)')
+[ -z "$UFW" ]; check "ufw: only 22/443" $? "$UFW"
 echo "   (also verify the netcup cloud firewall in the customer panel)"
 
 echo

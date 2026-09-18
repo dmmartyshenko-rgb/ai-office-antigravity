@@ -3,6 +3,13 @@
 v2202609416472518907.goodsrv.de {
 	reverse_proxy 127.0.0.1:8080
 
+	# Port 80 is firewalled off — obtain/renew certs over 443 (TLS-ALPN-01).
+	tls {
+		issuer acme {
+			disable_http_challenge
+		}
+	}
+
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
