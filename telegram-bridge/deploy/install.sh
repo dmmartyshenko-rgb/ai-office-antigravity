@@ -61,7 +61,16 @@ systemctl daemon-reload
 systemctl enable tg-bridge
 
 echo "==> Configuring Caddy for $DOMAIN"
-cp "$REPO_DIR/deploy/Caddyfile" /etc/caddy/Caddyfile
+# Install our Caddyfile ONLY on a fresh box (missing, or the stock Debian default).
+# If the file was customised on the server (e.g. a ZeroSSL issuer / port-80 ACME
+# workaround for the shared goodsrv.de rate limit), keep it — never clobber a
+# working TLS setup on a re-run.
+if [ ! -f /etc/caddy/Caddyfile ] || grep -q "easy way to configure" /etc/caddy/Caddyfile; then
+    cp "$REPO_DIR/deploy/Caddyfile" /etc/caddy/Caddyfile
+else
+    cp -n /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bootstrap-bak 2>/dev/null || true
+    echo "    Existing custom /etc/caddy/Caddyfile kept (backup: .bootstrap-bak). Not overwriting."
+fi
 mkdir -p /var/log/caddy && chown caddy:caddy /var/log/caddy
 systemctl enable caddy
 systemctl restart caddy
