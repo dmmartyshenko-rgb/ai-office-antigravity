@@ -1,0 +1,8 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Claudex Loop — прогонные артефакты и диагностика (вне чекаута по дефолту)
+.claudex-loop/
