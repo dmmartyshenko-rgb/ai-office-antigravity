@@ -1,0 +1,44 @@
+{
+  "_comment": [
+    "Желаемая цепочка фоллбэка OmniRoute для Claude Code, ведущего OpenMontage.",
+    "Это ЧЕЛОВЕКОЧИТАЕМЫЙ образец намерения, не импортируемый как есть.",
+    "Применить: дашборд http://localhost:20128 → Combos, либо CLI:",
+    "  omniroute combo list                 # что есть сейчас (есть готовый 'auto')",
+    "  omniroute combo create <name> ...    # создать свою цепочку",
+    "  omniroute combo switch <name>        # сделать активной",
+    "Порядок = приоритет: первый здоровый и с квотой отвечает, иначе следующий.",
+    "Egress облачного окружения режет openai/openrouter — на своей машине они тоже в игре."
+  ],
+  "name": "openmontage-claude",
+  "strategy": "priority-fallback",
+  "chain": [
+    {
+      "tier": "subscription",
+      "target": "anthropic/claude-sonnet-4",
+      "why": "Основной: подписка/Claude coding plan, если подключена (Tier 1)."
+    },
+    {
+      "tier": "api",
+      "target": "anthropic/claude-sonnet-4",
+      "credential": "ANTHROPIC_API_KEY",
+      "why": "Резерв 1: прямой Anthropic API-ключ (Tier 2). Egress: доступен."
+    },
+    {
+      "tier": "api",
+      "target": "google/gemini-2.5-pro",
+      "credential": "GEMINI_API_KEY",
+      "why": "Резерв 2: Gemini как второй провайдер. Egress: доступен."
+    },
+    {
+      "tier": "cheap",
+      "target": "openai/gpt-5.4",
+      "credential": "OPENAI_API_KEY",
+      "why": "Резерв 3: OpenAI. ВНИМАНИЕ: заблокирован egress'ом облака — работает только на своей машине."
+    },
+    {
+      "tier": "free",
+      "target": "auto",
+      "why": "Последний резерв: keyless free-комбо OmniRoute (OpenCode Free и др.), работает без ключей."
+    }
+  ]
+}
