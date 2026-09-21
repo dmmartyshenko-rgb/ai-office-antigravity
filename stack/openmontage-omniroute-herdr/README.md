@@ -85,6 +85,15 @@ scripts/start-openmontage-session.sh start "Собери 30-сек ролик п
 2. **Медиа-провайдеры** (FLUX, Veo, Kling, TTS, Sora…): ключи в `.env` самого
    OpenMontage (`$STACK_DIR/repos/OpenMontage/.env`). Роутер их не трогает.
 
+## Клиентский ключ OmniRoute
+
+Маршрутизация запросов (`/v1/chat/completions` с `model: auto`) работает **без ключа** —
+роутер отвечает из коробки. Но команды вроде `omniroute setup-claude` и листинг
+`/v1/models` требуют клиентского API-ключа OmniRoute. Заведи его один раз в дашборде
+(`http://localhost:20128` → онбординг/API Keys), затем впиши в `.env`:
+`OMNIROUTE_API_KEY=...` — скрипты сами прокинут его в `setup-claude`, в env Claude Code
+и в панель Herdr.
+
 ## Ограничения egress облачного окружения (проверено 2026-09-21)
 
 | Хост | Статус здесь | Нужен для |
