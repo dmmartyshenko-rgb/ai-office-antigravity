@@ -13,5 +13,6 @@
 | mimo-bot | пауза | MiMo Code: Telegram-бот-кодер на Vercel + установка Xiaomi MiMo CLI | [domains/mimo-bot.md](domains/mimo-bot.md) |
 | zhkh-agent | активен | ЖКХ-агент: кейс №1 (Моск. обл.) — тарифная база собрана, ждёт прогона | [domains/zhkh-agent.md](domains/zhkh-agent.md) |
 | route-loop | пауза | Двухмодельная петля сборки: Fable 5 планирует и ревьюит, GPT-5.6 Sol пишет | [domains/route-loop.md](domains/route-loop.md) |
+| claudex-loop | пауза | Связка Claude↔Codex (chaseai-yt/claudex-loop): Claude-сторона готова, ждёт Codex CLI | [domains/claudex-loop.md](domains/claudex-loop.md) |
 
 Журналы решений — в [journal/](journal/), по файлу на домен.
