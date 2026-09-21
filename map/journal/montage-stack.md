@@ -51,3 +51,32 @@ egress.
   открытым egress `auto` отвечает из коробки.
 Вывод подтверждён вживую: обвязка корректна; облако ограничивает egress (включая free-
 провайдеров) и не даёт поставить Herdr — полный прогон делается на своей машине.
+
+## 2026-09-21 — Живой прогон на Mac пользователя (пошагово)
+Разворачивали на Mac (открытый egress) командами через терминал пользователя.
+Инструменты: node 22.22.1, npm, python 3.14 (но venv OpenMontage собрался на 3.10
+через uv), ffmpeg 8.1, brew, claude 2.1.278 — были; доставили herdr 0.9.1
+(официальный install.sh; brew-сборка тянет компиляцию LLVM — отказались) и
+omniroute обновили до 3.8.50.
+- Обвязку забрали на Mac: ветка склонирована, локальная правка `hermes-megamap`
+  спрятана в git stash (вернуть: checkout прежней ветки + stash pop; прежняя ветка
+  `claude/hermes-megamap-system-q18hl3`).
+- `01-clone` + `02-install openmontage` отработали; OpenMontage `.venv` + deps + remotion.
+- OmniRoute: обнаружилось старое зашифрованное хранилище без ключа
+  (`STORAGE_ENCRYPTION_KEY` утерян — нет ни в .env/server.env/профилях/Keychain/логах).
+  Старую базу отодвинули в `~/.omniroute/reset-backup-*`, записали новый ключ,
+  добавили провайдер stack-groq (ключ Groq).
+- Прямой запрос через роутер — успех: ответ на `openai/gpt-oss-120b` (Groq).
+- Сессия OpenMontage поднята в фоновом Herdr (workspace w1, панель w1:p1);
+  `omniroute run claude` стартовал Claude Code в папке OpenMontage, прошли вопрос
+  доверия к папке — интерфейс поднялся, строка `auto · API Usage Billing` (через шлюз).
+- ГРАБЛИ: комбо `auto` от Claude Code уходит в бесплатный OpenCode → 403
+  («can only be used from within OpenCode»). Решение: прибить модель к
+  `openai/gpt-oss-120b` (в `.env` OM_MODEL).
+- Прочее: node 22.22.1 < требуемого 22.22.2 — баннер OmniRoute, не блокер
+  (brew upgrade node по желанию); дашборд-пароль CHANGEME отвергнут (остался старый),
+  дашборд не нужен, сброс — `omniroute-reset-password`.
+Финал передан пользователю как бриф-хендофф
+`stack/openmontage-omniroute-herdr/HANDOFF-live-run.md`: пользователь доводит
+прогон через Claude Code в терминале (прибить модель → перезапустить сессию →
+боевой бриф без 403).
