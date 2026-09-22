@@ -13,5 +13,6 @@
 | mimo-bot | пауза | MiMo Code: Telegram-бот-кодер на Vercel + установка Xiaomi MiMo CLI | [domains/mimo-bot.md](domains/mimo-bot.md) |
 | zhkh-agent | активен | ЖКХ-агент: кейс №1 (Моск. обл.) — тарифная база собрана, ждёт прогона | [domains/zhkh-agent.md](domains/zhkh-agent.md) |
 | route-loop | пауза | Двухмодельная петля сборки: Fable 5 планирует и ревьюит, GPT-5.6 Sol пишет | [domains/route-loop.md](domains/route-loop.md) |
+| birzha-analitik | активен | Харнес анализа бумаг MOEX под счета Финам/Тинькофф: пайплайн, источники, риски РФ, HITL | [domains/birzha-analitik.md](domains/birzha-analitik.md) |
 
 Журналы решений — в [journal/](journal/), по файлу на домен.
