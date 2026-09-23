@@ -1,0 +1,57 @@
+{
+  "$comment": "Эпизод дисциплинарного дела. Файл: private/episodes/E-NNN.json. Проверяет scripts/check_case.py.",
+  "type": "object",
+  "required": ["id", "date", "summary", "category", "role", "statement_type", "sources",
+               "canonical_basis", "verification", "defense"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^E-\\d{3}$"},
+    "date": {"type": "string", "description": "ISO-дата события или сообщения"},
+    "summary": {"type": "string", "description": "Нейтрально: кто, что, где. Без ярлыков и эпитетов."},
+    "category": {"enum": ["insult", "jargon", "divine_authority", "double_standard", "authority_claim",
+                           "accusation_without_trial", "alcohol", "criminal_record", "disobedience",
+                           "war_involvement", "pastoral_harm", "other"]},
+    "role": {"enum": ["charge", "context", "rejected"],
+             "description": "charge — пункт обвинения; context — фон (третьи лица, история); rejected — отклонено"},
+    "statement_type": {"enum": ["quote", "fact", "opinion"]},
+    "sources": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["sha256_or_url", "locator", "level"],
+        "properties": {
+          "sha256_or_url": {"type": "string", "description": "sha256 из manifest.json или URL публичного источника"},
+          "locator": {"type": "string", "description": "msg:N | audio:<sha>@<сек> | стр./абзац документа"},
+          "level": {"enum": ["A", "B", "C", "D", "E"]},
+          "quote_verbatim": {"type": "string", "description": "Дословно, как в источнике"},
+          "quote_checked_by_ear": {"type": "boolean", "description": "Для аудио: человек переслушал"}
+        }
+      }
+    },
+    "linked_episodes": {"type": "array", "items": {"type": "string"},
+                        "description": "Для double_standard: эпизоды, с которыми сопоставляется"},
+    "canonical_basis": {"type": "array", "minItems": 1, "items": {"type": "string"},
+                        "description": "Норма Писания/исповедания/устава: «Еф 4:29», «Устав ст. N»"},
+    "opinion": {"type": "string", "description": "Оценка заявителя от первого лица — только здесь"},
+    "third_parties": {"type": "array", "items": {
+      "type": "object", "required": ["who", "consent"],
+      "properties": {"who": {"type": "string"}, "consent": {"type": "boolean"}}}},
+    "verification": {
+      "type": "object", "required": ["status"],
+      "properties": {
+        "status": {"enum": ["verified_primary", "verified_secondary", "unverified", "disputed"]},
+        "note": {"type": "string"}
+      }
+    },
+    "political": {"type": "boolean", "description": "Касается власти, государств, войны, армии"},
+    "legal_risk_reviewed": {"type": "boolean", "description": "Обязательно true для power/war_involvement"},
+    "defense": {
+      "type": "object", "required": ["rebuttal", "assessment"],
+      "properties": {
+        "rebuttal": {"type": "string", "description": "Лучший довод защиты Ответчика"},
+        "assessment": {"enum": ["pending", "holds", "weakens", "breaks"],
+                       "description": "holds — обвинение устояло; weakens — ослаблено; breaks — разбито"},
+        "reply": {"type": "string", "description": "Наш ответ на довод защиты"}
+      }
+    }
+  }
+}
