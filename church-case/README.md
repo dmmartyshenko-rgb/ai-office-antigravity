@@ -19,7 +19,9 @@
 1. **Запустить харнес локально** (лучший вариант для приватности):
    ```bash
    git clone <этот репозиторий> && cd ai-office-antigravity
-   pip install faster-whisper   # + ffmpeg: winget install ffmpeg / brew install ffmpeg
+   pip install mlx-whisper      # Mac M1–M4 (иначе: pip install faster-whisper)
+   brew install ffmpeg
+   python3 church-case/scripts/find_materials.py --term "Фамилия" --term "Организация"
    python3 church-case/scripts/ingest_whatsapp.py "~/Downloads/Чат WhatsApp с ….zip"
    python3 church-case/scripts/ingest_whatsapp.py --extra "~/Материалы/Сергей"
    python3 church-case/scripts/transcribe.py
@@ -41,6 +43,7 @@
 
 | Шаг | Команда | Выход |
 |---|---|---|
+| Поиск на компьютере | `scripts/find_materials.py --term …` | `private/work/found.csv` (опись, без копирования) |
 | Приём | `scripts/ingest_whatsapp.py <zip>` | `private/work/manifest.json`, `messages.jsonl` |
 | Расшифровка | `scripts/transcribe.py` | `private/work/transcripts/<sha256>.json` |
 | Кандидаты | `scripts/scan_candidates.py --author …` | `private/work/candidates.jsonl` |

@@ -20,11 +20,21 @@ grep -q 'критиковать' "$W/messages.jsonl" || fail "многостро
 grep -q '"attachment_sha256": "[0-9a-f]\{64\}"' "$W/messages.jsonl" || fail "вложение не связано с sha256"
 AUD=$(python3 -c "import json;m=json.load(open('$W/manifest.json'));print([h for h,e in m.items() if e['kind']=='audio'][0])")
 
-# Фальшивая расшифровка аудио (whisper в тесте не нужен)
-mkdir -p "$W/transcripts"
-cat > "$W/transcripts/$AUD.json" <<J
-{"sha256":"$AUD","path":"raw/export/00000003.opus","segments":[{"start":0.0,"end":5.0,"text":"Это недоросли, а не власть."}],"text":""}
-J
+echo "== transcribe (поддельный mlx_whisper вместо модели)"
+FAKE="$CHURCH_CASE_PRIVATE/fake"; mkdir -p "$FAKE"
+cat > "$FAKE/mlx_whisper.py" <<'P'
+def transcribe(path, **kw):
+    return {"language": "ru", "segments": [{"start": 0.0, "end": 5.0, "text": " Это недоросли, а не власть."}]}
+P
+PYTHONPATH="$FAKE" python3 "$S/transcribe.py" --backend mlx
+[ -f "$W/transcripts/$AUD.json" ] || fail "расшифровка не записана под sha256 оригинала"
+PYTHONPATH="$FAKE" python3 "$S/transcribe.py" | grep -q "к расшифровке: 0" || fail "повторный запуск не идемпотентен"
+
+echo "== find_materials"
+MAC="$(mktemp -d)"; trap 'rm -rf "$CHURCH_CASE_PRIVATE" "$MAC"' EXIT
+mkdir -p "$MAC/Документы/Досье Тестов" && echo x > "$MAC/Документы/Досье Тестов/устав.pdf"
+python3 "$S/find_materials.py" --term "тестов" --root "$MAC"
+grep -q "folder" "$W/found.csv" || fail "поиск не нашёл папку"
 
 echo "== scan"
 python3 "$S/scan_candidates.py" --author Иван
