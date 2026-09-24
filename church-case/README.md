@@ -5,7 +5,8 @@
 подпись человеком.
 
 - Правила и правовой контур — [CLAUDE.md](CLAUDE.md)
-- Роли и промпты субагентов — [AGENTS.md](AGENTS.md)
+- Роли и промпты субагентов — [AGENTS.md](AGENTS.md); субагенты Claude Code — `.claude/agents/church-*.md`
+- Терминальный оркестратор — [ORCHESTRATOR.md](ORCHESTRATOR.md)
 - Процедура по стадиям — [procedure/stages.md](procedure/stages.md)
 - Формат эпизода — [schema/episode.schema.json](schema/episode.schema.json)
 - Шаблоны — [templates/](templates/)
@@ -47,6 +48,7 @@
 | Приём | `scripts/ingest_whatsapp.py <zip>` | `private/work/manifest.json`, `messages.jsonl` |
 | Расшифровка | `scripts/transcribe.py` | `private/work/transcripts/<sha256>.json` |
 | Кандидаты | `scripts/scan_candidates.py --author …` | `private/work/candidates.jsonl` |
+| Веб-страница | `scripts/capture_web.py URL --label …` | `private/raw/web/…` (снимок, HTML, текст, sha256) |
 | Валидация | `scripts/check_case.py [--strict]` | FAIL/WARN, код выхода |
 | Приложение | `scripts/build_dossier.py` | `private/drafts/prilozhenie_epizody.md` |
 | Тест харнеса | `bash tests/run_tests.sh` | «ВСЕ ТЕСТЫ ПРОЙДЕНЫ» |

@@ -107,4 +107,18 @@ echo "$OUT" | grep -q "«Очевидно»" || fail "не поймана кат
 echo "== dossier"
 python3 "$S/build_dossier.py"
 grep -q "Возможное возражение" "$CHURCH_CASE_PRIVATE/drafts/prilozhenie_epizody.md" || fail "нет доводов защиты в приложении"
+echo "== capture_web (пропускается без playwright)"
+if python3 -c "import playwright" 2>/dev/null; then
+  HTML="$CHURCH_CASE_PRIVATE/page.html"
+  printf '<html><head><title>Тест</title></head><body><p>Запись № 578: по благословению</p></body></html>' > "$HTML"
+  EXE=""; for c in /opt/pw-browsers/chromium-*/chrome-linux/chrome; do [ -x "$c" ] && EXE="--executable $c"; done
+  python3 "$S/capture_web.py" "file://$HTML" --label тест --wait 0 $EXE
+  WD=$(ls -d "$CHURCH_CASE_PRIVATE"/raw/web/*_тест | head -1)
+  [ -s "$WD/page.png" ] || fail "снимок не сделан"
+  grep -q "благословению" "$WD/page.txt" || fail "текст страницы не сохранён"
+  python3 -c "import json,sys;m=json.load(open('$W/manifest.json'));sys.exit(0 if sum(e['kind']=='web' for e in m.values())==3 else 1)" || fail "web-файлы не в manifest"
+else
+  echo "   playwright не установлен — шаг пропущен"
+fi
+
 echo "ВСЕ ТЕСТЫ ПРОЙДЕНЫ"
